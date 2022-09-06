@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.constraints import UniqueConstraint
 
 User = get_user_model()
 
@@ -22,8 +23,7 @@ class Post(models.Model):
         upload_to='posts/', null=True, blank=True)
     group = models.ForeignKey(
         Group, on_delete=models.CASCADE,
-        related_name="posts", blank=True, null=True
-    )
+        related_name="posts")
 
     def __str__(self):
         return self.text
@@ -50,10 +50,12 @@ class Follow(models.Model):
         User, on_delete=models.CASCADE, related_name='following')
 
     class Meta:
-        constraints = [models.UniqueConstraint(
-            fields=['user', 'following'],
-            name='unique_user_subscribers'
-        )]
+        constraints = (
+            UniqueConstraint(
+                fields=('user', 'following'),
+                name='unique_follower'
+            ),
+        )
 
         def __str__(self):
             return self.text

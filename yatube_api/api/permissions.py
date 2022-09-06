@@ -1,10 +1,19 @@
 from rest_framework import permissions
 
 
-class IsAuthorOrReadOnly(permissions.BasePermission):
-
-    message = 'Невозможно изменить данные'
+class AuthorPermission(permissions.BasePermission):
+    message = 'Вы должны быть автором поста'
 
     def has_object_permission(self, request, view, obj):
-        return (request.method in permissions.SAFE_METHODS
-                or obj.author == request.user)
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.author == request.user
+
+
+class FollowPermission(permissions.BasePermission):
+    message = 'Вы не можете подписаться'
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.user == request.user
