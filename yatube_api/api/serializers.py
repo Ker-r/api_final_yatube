@@ -1,13 +1,11 @@
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
 
 from posts.models import Follow, Group, Comment, Post, User
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = SlugRelatedField(slug_field='username', read_only=True)
-    group = serializers.SlugRelatedField(
-        read_only=True, slug_field='title')
+    author = serializers.SlugRelatedField(slug_field='username',
+                                          read_only=True)
 
     class Meta:
         fields = '__all__'
@@ -22,38 +20,40 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Comment
-        read_only_fields = ["post"]
 
 
 class GroupSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('__all__')
+        fields = ('id', 'title')
         model = Group
 
 
 class FollowSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(
-        read_only=True, slug_field='username',
+        read_only=True,
+        slug_field='username',
         default=serializers.CurrentUserDefault()
     )
     following = serializers.SlugRelatedField(
         slug_field='username',
-        queryset=User.objects.all()
+        queryset=User.objects.all(),
+        read_only=False
     )
 
     class Meta:
-        fields = ('user', 'following')
+        fields = '__all__'
         model = Follow
         validators = [
             serializers.UniqueTogetherValidator(
                 queryset=Follow.objects.all(),
-                fields=['user', 'following']
+                fields=['user', 'following'],
+                message='Вы подписаны'
             )
         ]
 
-    def validate_following(self, following):
-        if self.context.get('request').user == following:
+    def validate(self, data):
+        if self.context['request'].user == data['following']:
             raise serializers.ValidationError(
-                'Вы не можете подписаться на себя')
-        return following
+                'Невозможно подписаться на себя')
+        return data

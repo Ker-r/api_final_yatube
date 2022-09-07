@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models.constraints import UniqueConstraint
 
 User = get_user_model()
 
@@ -23,7 +22,7 @@ class Post(models.Model):
         upload_to='posts/', null=True, blank=True)
     group = models.ForeignKey(
         Group, on_delete=models.CASCADE,
-        related_name="posts")
+        related_name="posts", null=True, blank=True)
 
     def __str__(self):
         return self.text
@@ -39,7 +38,9 @@ class Comment(models.Model):
         'Дата добавления', auto_now_add=True, db_index=True)
 
     def __str__(self):
-        return self.text
+        return '"{}" to post "{}" by author "{}"'.format(self.text,
+                                                         self.post,
+                                                         self.author)
 
 
 class Follow(models.Model):
@@ -50,12 +51,12 @@ class Follow(models.Model):
         User, on_delete=models.CASCADE, related_name='following')
 
     class Meta:
-        constraints = (
-            UniqueConstraint(
-                fields=('user', 'following'),
-                name='unique_follower'
-            ),
-        )
+        constraints = [
+            models.UniqueConstraint(
+                name='unique_follow',
+                fields=('user', 'following')
+            )
+        ]
 
-        def __str__(self):
-            return self.text
+    def __str__(self):
+        return '{} follows {}'.format(self.user, self.following)
